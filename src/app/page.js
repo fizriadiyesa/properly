@@ -14,6 +14,7 @@ const daftarProperti = [
     kota: "Depok",
     tipe: "Rumah",
     lokasi: "Limo, Depok",
+    deskripsi: "LT 66 |  LB 68  | KT 3 | KM 2 | 2 LT",
     gambar: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80",
     wa: "6281234567890"   
   },
@@ -25,7 +26,8 @@ const daftarProperti = [
       kota: "Depok",
       tipe: "Rumah",
       lokasi: "Sawangan, Depok",
-      gambar: "https://images.unsplash.com/photo-1600596542815-e32cbee30d1c?auto=format&fit=crop&w=800&q=80",
+      deskripsi: "LT 66 |  LB 68  | KT 3 | KM 2 | 2 LT",
+      gambar: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80",
       wa: "6281234567890"
     },
     {
@@ -36,6 +38,7 @@ const daftarProperti = [
       kota: "Bekasi",
       tipe: "Apartemen",
       lokasi: "Bekasi Selatan",
+      deskripsi: "LT 66 |  LB 68  | KT 3 | KM 2 | 2 LT",
       gambar: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
       wa: "6281234567890"
     },
@@ -47,6 +50,7 @@ const daftarProperti = [
       kota: "Jakarta Selatan",
       tipe: "Ruko",
       lokasi: "Tebet, Jakarta",
+      deskripsi: "LT 66 |  LB 68  | KT 3 | KM 2 | 2 LT",
       gambar: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
       wa: "6281234567890"
     },
@@ -58,6 +62,7 @@ const daftarProperti = [
       kota: "Tangerang Selatan",
       tipe: "Rumah",
       lokasi: "Bintaro Sektor 9",
+      deskripsi: "LT 66 |  LB 68  | KT 3 | KM 2 | 2 LT",
       gambar: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
       wa: "6281234567890"
     }
@@ -156,6 +161,7 @@ return (
               <div className="p-4">
                 <h2 className="font-bold text-lg text-gray-800">{rumah.nama}</h2>
                 <p className="text-gray-500 text-sm mb-2">{rumah.lokasi}</p>
+                <p className="text-gray-500 text-sm mb-2">{rumah.deskripsi}</p>
                 <p className="font-bold text-xl text-teal-700 mb-4">{rumah.hargaDisplay}</p>
                 
                 <a 
@@ -172,7 +178,7 @@ return (
           {/* Kalau gak ada hasil */}
           {propertiDisaring.length === 0 && (
             <div className="col-span-full text-center py-10 text-gray-500">
-              Yah, properti yang lu cari gak ada Bro. Coba ganti filter lain.
+              Yah, properti yang kamu cari tidak ada. Coba ganti filter lain.
             </div>
           )}
 
