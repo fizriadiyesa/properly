@@ -20,7 +20,7 @@ export default function Navbar() {
         {/* LOGO */}
         <div className="flex items-center">
           <img 
-            src="/images/logo.png" 
+            src="/images/Logo.png" 
             alt="Logo" 
             className="h-10 md:h-20 w-auto object-contain"
           />
