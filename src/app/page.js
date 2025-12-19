@@ -26,8 +26,18 @@ export default function Home() {
 
   const propertiDisaring = dataProperti.filter((item) => {
     if (!item.nama) return false;
+
+    // 1. Cek Lokasi
     if (filterLokasi !== "Semua" && item.kota !== filterLokasi) return false;
-    if (filterTipe !== "Semua" && item.tipe !== filterTipe) return false;
+
+    // 2. Cek Tipe
+    if (filterTipe !== "Semua"){
+      const tipeDiDatabase = item.tipe ? item.tipe.toLowerCase() : "";
+      const tipeYangDicari = filterTipe.toLowerCase();
+      if (!tipeDiDatabase.includes(tipeYangDicari)) return false;
+    }
+
+    // 3. Cek Harga
     if (filterHarga !== "Semua") {
       const harga = parseInt(item.hargaAngka) || 0;
       if (filterHarga === "<1M" && harga >= 1000000000) return false;
@@ -66,6 +76,8 @@ export default function Home() {
             <option value="Rumah">Rumah</option>
             <option value="Apartemen">Apartemen</option>
             <option value="Ruko">Ruko</option>
+            <option value="Tanah">Tanah</option>
+            <option value="Usaha">Usaha</option>  
           </select>
           <select className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterHarga(e.target.value)}>
             <option value="Semua">💰 Range Harga</option>

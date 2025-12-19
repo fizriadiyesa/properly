@@ -18,8 +18,12 @@ export default function Navbar() {
         </button>
 
         {/* LOGO */}
-        <div className="text-2xl font-serif font-bold text-header tracking-tight">
-            PROPERLY<span className="text-brand">.</span>
+        <div className="flex items-center">
+          <img 
+            src="/images/logo.png" 
+            alt="Logo" 
+            className="h-10 md:h-20 w-auto object-contain"
+          />
         </div>
 
         <div className="w-8"></div> 
