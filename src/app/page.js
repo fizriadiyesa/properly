@@ -51,10 +51,15 @@ export default function Home() {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <select className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterLokasi(e.target.value)}>
             <option value="Semua">📍 Semua Lokasi</option>
-            <option value="Depok">Depok</option>
-            <option value="Jakarta Selatan">Jakarta Selatan</option>
             <option value="Bekasi">Bekasi</option>
+            <option value="Depok">Depok</option>
+            <option value="Jakarta Utara">Jakarta Utara</option>
+            <option value="Jakarta Selatan">Jakarta Selatan</option>
+            <option value="Jakarta Timur">Jakarta Timur</option>
+            <option value="Jakarta Barat">Jakarta Barat</option>
+            <option value="Jakarta Pusat">Jakarta Pusat</option>
             <option value="Tangerang Selatan">Tangsel</option>
+            <option value="Jawa Timur">Jawa Timur</option>
           </select>
           <select className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterTipe(e.target.value)}>
             <option value="Semua">🏠 Semua Tipe</option>
@@ -67,6 +72,7 @@ export default function Home() {
             <option value="<1M">Di bawah 1M</option>
             <option value="1M-2M">1M - 2M</option>
             <option value="2M-3M">2M - 3M</option>
+            <option value="3M-4M">3M - 4M</option>
             <option value=">4M"> Di atas 4M</option>
           </select>
         </div>
@@ -98,20 +104,17 @@ export default function Home() {
                 </div>
                 
                 {/* CONTENT */}
-                <div className="p-6 flex-grow flex flex-col justify-between">
+                <div className="p-6 grow flex flex-col justify-between">
                   <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                       {/* Kota */}
-                       <p className="text-body text-xs uppercase tracking-wider font-bold">{rumah.kota}</p>
-                       {/* Harga */}
-                       <p className="text-header font-serif font-bold text-lg">{rumah.hargaDisplay}</p>
-                    </div>
-
                     {/* Nama Property */}
-                    <h2 className="text-xl text-header mb-3 font-serif leading-tight">
-                      {rumah.nama}
-                    </h2>
+                    <h2 className=" text-header font-serif leading-tight text-lg mb-3">{rumah.nama}</h2>
+
+                    {/* Kota */}
+                    <p className="text-body text-xs uppercase tracking-wider font-bold mb-4">{rumah.kota}</p>
                     
+                    {/* Harga */}
+                    <h1 className="text-header font-serif font-bold text-2xl mb-4">{rumah.hargaDisplay}</h1>
+
                     {/* Deskripsi */}
                     <p className="text-body text-sm line-clamp-3 mb-6 leading-relaxed font-light">
                       {rumah.deskripsi}
