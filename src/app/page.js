@@ -1,153 +1,137 @@
 "use client";
-
-import React, {useState, useEffect} from 'react';
-import Papa from 'papaparse'; // Ini alat baca Excel/CSV nya
+import React, { useState, useEffect } from 'react';
+import Papa from 'papaparse';
 
 export default function Home() {
-    // --- 1. STATE ---
-    const [dataProperti, setDataProperti] = useState([]); // Wadah data kosong
-    const [loading, setLoading] = useState(true); //Status laoding
+  const [dataProperti, setDataProperti] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterLokasi, setFilterLokasi] = useState("Semua");
+  const [filterTipe, setFilterTipe] = useState("Semua");
+  const [filterHarga, setFilterHarga] = useState("Semua");
 
-    const [filterLokasi, setFilterLokasi] = useState("Semua");
-    const [filterHarga, setFilterHarga] = useState("Semua");
-    const [filterTipe, setFilterTipe] = useState("Semua");
+  useEffect(() => {
+    // ⚠️ JANGAN LUPA PASTE LINK GOOGLE SHEET LU DI SINI
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSEaBcNHYoROpb8esZ7V2Efu620J8iDtl-pv9MKNDKNKgVBpXLGFJlRkqcvm7mlFBlCX6Ylh8RFcb7p/pub?gid=0&single=true&output=csv';
 
-    // --- 2. AMBIL DATA DARI GOOGLE SHEETS ---
-    useEffect(() => {
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSEaBcNHYoROpb8esZ7V2Efu620J8iDtl-pv9MKNDKNKgVBpXLGFJlRkqcvm7mlFBlCX6Ylh8RFcb7p/pub?gid=0&single=true&output=csv'
-
-        Papa.parse(SHEET_URL, {
-            download: true,
-            header: true, // Baca baris pertama sebagai nama kolom
-            complete: (result) => {
-                // Ketika data berhasil ditarik:
-                setDataProperti(result.data);
-                setLoading(false); // Matikan loading
-            },
-            error: (err) => {
-                console.error("Gagal menarik data:", err);
-                setLoading(false);
-            }
-        });
-    },[]);
-
-    // --- 3. LOGIKA FILTER ---
-    const propertiDisaring = dataProperti.filter((item) => {
-        // Pastikan item.nama ada isinya biar gak error
-        if (!item.nama) return false;
-
-        // Cek Lokasi
-        if (filterLokasi !== "Semua" && item.kota !== filterLokasi) return false;
-
-        // Cek Tipe
-        if (filterTipe !== "Semua" && item.tipe !== filterTipe) return false;
-
-        // Cek Harga
-        if (filterHarga !== "Semua"){
-            const harga = parseInt(item.hargaAngka); // Ubah teks sheet jadi angka
-            if (filterHarga === "<1M" && harga >= 1000000000) return false;
-            if (filterHarga === "1M-2M" && (harga < 1000000000 || harga > 2000000000)) return false;
-            if (filterHarga === "2M-3M" && (harga < 2000000000 || harga > 3000000000)) return false;
-            if (filterHarga === "3M-4M" && (harga < 3000000000 || harga > 4000000000)) return false;
-            if (filterHarga === ">4M" && harga <= 4000000000) return false;
-        }
-
-        return true;
+    Papa.parse(SHEET_URL, {
+      download: true,
+      header: true,
+      complete: (result) => {
+        setDataProperti(result.data);
+        setLoading(false);
+      },
+      error: (err) => { console.error(err); setLoading(false); }
     });
+  }, []);
 
-    // --- 4. TAMPILAN ---
-    return (
-    <div className="min-h-screen bg-gray-50 pb-10">
+  const propertiDisaring = dataProperti.filter((item) => {
+    if (!item.nama) return false;
+    if (filterLokasi !== "Semua" && item.kota !== filterLokasi) return false;
+    if (filterTipe !== "Semua" && item.tipe !== filterTipe) return false;
+    if (filterHarga !== "Semua") {
+      const harga = parseInt(item.hargaAngka) || 0;
+      if (filterHarga === "<1M" && harga >= 1000000000) return false;
+      if (filterHarga === "1M-2M" && (harga < 1000000000 || harga > 2000000000)) return false;
+      if (filterHarga === "2M-3M" && (harga < 2000000000 || harga > 3000000000)) return false;
+      if (filterHarga === "3M-4M" && (harga < 3000000000 || harga > 4000000000)) return false;
+      if (filterHarga === ">4M" && harga <= 4000000000) return false;
+    }
+    return true;
+  });
+
+  return (
+    <div className="min-h-screen pb-20">
       
-      {/* Container Utama */}
-      <div className="max-w-4xl mx-auto px-4 pt-6">
+      {/* ❌ HERO SECTION HAPUS (Langsung masuk konten) */}
+      
+      <div className="max-w-6xl mx-auto px-4 pt-10">
         
-        {/* BAGIAN FILTER CONTROL */}
-        <div className="bg-white p-4 rounded-lg shadow-sm mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <select className="border p-2 rounded w-full" onChange={(e) => setFilterLokasi(e.target.value)}>
-            <option value="Semua">Semua Lokasi</option>
+        {/* FILTER BAR - Clean Minimalist */}
+        {/* Shadow subtle (shadow-sm) dan rounded dikit */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <select className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterLokasi(e.target.value)}>
+            <option value="Semua">📍 Semua Lokasi</option>
             <option value="Depok">Depok</option>
             <option value="Jakarta Selatan">Jakarta Selatan</option>
             <option value="Bekasi">Bekasi</option>
-            <option value="Tangerang Selatan">Tangerang Selatan</option>
+            <option value="Tangerang Selatan">Tangsel</option>
           </select>
-
-          <select className="border p-2 rounded w-full" onChange={(e) => setFilterTipe(e.target.value)}>
-            <option value="Semua">Semua Tipe</option>
+          <select className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterTipe(e.target.value)}>
+            <option value="Semua">🏠 Semua Tipe</option>
             <option value="Rumah">Rumah</option>
             <option value="Apartemen">Apartemen</option>
             <option value="Ruko">Ruko</option>
           </select>
-
-          <select className="border p-2 rounded w-full" onChange={(e) => setFilterHarga(e.target.value)}>
-            <option value="Semua">Semua Harga</option>
+          <select className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterHarga(e.target.value)}>
+            <option value="Semua">💰 Range Harga</option>
             <option value="<1M">Di bawah 1M</option>
             <option value="1M-2M">1M - 2M</option>
             <option value="2M-3M">2M - 3M</option>
-            <option value="3M-4M">3M - 4M</option>
-            <option value=">4M">Di atas 4M</option>
+            <option value=">4M"> Di atas 4M</option>
           </select>
         </div>
 
-        {/* LOADING STATE */}
+        {/* LOADING */}
         {loading && (
-          <div className="text-center py-10">
-            <p className="text-teal-600 font-bold animate-pulse">Sedang mengambil data properti terbaru...</p>
+          <div className="text-center py-20">
+            <p className="text-body text-lg animate-pulse">Memuat data...</p>
           </div>
         )}
 
-        {/* HASIL PENCARIAN */}
+        {/* LISTING CARD */}
         {!loading && (
-          <>
-            <p className="mb-4 text-gray-600">Ditemukan {propertiDisaring.length} properti:</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {propertiDisaring.map((rumah, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                  
-                  <div className="relative">
-                    {/* Fallback kalau gambar error/kosong */}
-                    <img 
-                      src={rumah.gambar || "https://via.placeholder.com/400x300?text=No+Image"} 
-                      alt={rumah.nama} 
-                      className="w-full h-48 object-cover"
-                    />
-                    <span className="absolute top-2 left-2 bg-teal-600 text-white text-xs px-2 py-1 rounded">
-                      {rumah.tipe}
-                    </span>
-                  </div>
-                  
-                  <div className="p-4">
-                    <h2 className="font-bold text-lg text-gray-800">{rumah.nama}</h2>
-                    <p className="text-gray-500 text-sm mb-2">{rumah.lokasi}</p>
-                    <p className="text-gray-500 text-sm mb-2">{rumah.deskripsi}</p>
-                    <p className="font-bold text-xl text-teal-700 mb-4">{rumah.hargaDisplay}</p>
-                    
-                    <a 
-                      href={`https://wa.me/${rumah.wa}?text=Halo, saya tertarik dengan ${rumah.nama}`}
-                      target="_blank"
-                      className="block text-center border border-teal-600 text-teal-600 py-2 rounded font-semibold hover:bg-teal-600 hover:text-white transition-colors"
-                    >
-                      Chat Owner via WA
-                    </a>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {propertiDisaring.map((rumah, index) => (
+              <div key={index} className="group bg-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl shadow-sm border border-gray-50 flex flex-col">
+                
+                {/* IMAGE */}
+                <div className="relative h-64 overflow-hidden">
+                  <img 
+                    src={rumah.gambar || "https://via.placeholder.com/400x300"} 
+                    alt={rumah.nama} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  {/* Label Tipe: Simple White Tag */}
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-header text-xs px-3 py-1 font-bold uppercase tracking-wider rounded-sm shadow-sm">
+                    {rumah.tipe}
                   </div>
                 </div>
-              ))}
-            </div>
+                
+                {/* CONTENT */}
+                <div className="p-6 flex-grow flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-baseline mb-2">
+                       {/* Kota */}
+                       <p className="text-body text-xs uppercase tracking-wider font-bold">{rumah.kota}</p>
+                       {/* Harga */}
+                       <p className="text-header font-serif font-bold text-lg">{rumah.hargaDisplay}</p>
+                    </div>
 
-            {propertiDisaring.length === 0 && (
-              <div className="col-span-full text-center py-10 text-gray-500">
-                Yah, properti yang kamu cari belum ada.
+                    {/* Nama Property */}
+                    <h2 className="text-xl text-header mb-3 font-serif leading-tight">
+                      {rumah.nama}
+                    </h2>
+                    
+                    {/* Deskripsi */}
+                    <p className="text-body text-sm line-clamp-3 mb-6 leading-relaxed font-light">
+                      {rumah.deskripsi}
+                    </p>
+                  </div>
+                  
+                  {/* TOMBOL: Minimalist Outline */}
+                  <a 
+                    href={`https://wa.me/${rumah.wa}?text=Halo, saya tertarik dengan listing ${rumah.nama}`}
+                    target="_blank"
+                    className="w-full block text-center border border-header text-header py-3 text-xs font-bold tracking-widest uppercase hover:bg-header hover:text-white transition-colors rounded-lg"
+                  >
+                    Chat Owner via WA
+                  </a>
+                </div>
               </div>
-            )}
-          </>
+            ))}
+          </div>
         )}
-
       </div>
     </div>
   );
 }
-
-
-
-

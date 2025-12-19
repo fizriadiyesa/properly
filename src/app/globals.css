@@ -1,36 +1,31 @@
-@import "tailwindcss";
-
-/* 1. Import Font Properly */
+/* 1. Import Font */
 @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;600;700&display=swap');
 
-/* 2. Setting Tema (Warna & Font) ala v4 */
-@theme {
-  /* Definisikan Warna Properly */
-  --color-primary: #1A3C34;   /* Hijau Tua */
-  --color-secondary: #C6A87C; /* Emas */
-  --color-cream: #F9F7F2;     /* Krem */
-  --color-dark: #111111;      /* Hitam */
-  --color-grey: #888888;      /* Abu */
+/* 2. Import Tailwind v4 */
+@import "tailwindcss";
 
-  /* Definisikan Font */
+/* 3. Definisi Warna Minimalis Warm */
+@theme {
+  /* Palet Warna */
+  --color-header: #323031;    /* Coklat Tua (Text Utama) */
+  --color-body: #7F7979;      /* Abu Coklat (Text Deskripsi) */
+  --color-brand: #C1BDB3;     /* Krem (Buat accent dikit-dikit aja) */
+  --color-bg-white: #FFFFFF;  /* Putih Bersih (Modern) */
+
+  /* Font */
   --font-serif: "Playfair Display", serif;
   --font-sans: "Lato", sans-serif;
 }
 
-/* 3. Style Tambahan */
-:root {
-  --foreground-rgb: 50, 50, 50;
-  --background-start-rgb: 253, 251, 247;
-  --background-end-rgb: 253, 251, 247;
-}
-
+/* 4. Reset Body */
 body {
-  background-color: var(--color-cream);
-  color: var(--color-dark);
+  background-color: var(--color-bg-white);
+  color: var(--color-body);
   font-family: var(--font-sans);
 }
 
-/* Biar semua Heading (h1, h2) otomatis pake font Properly */
+/* Heading tetap pakai Serif biar ada karakter, tapi warna coklat tua */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-serif);
+  color: var(--color-header);
 }
