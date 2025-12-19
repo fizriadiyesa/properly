@@ -21,7 +21,7 @@ export default function Navbar() {
         
             {/* Logo Tengah */}
             <div className="text-xl font-bold text-teal-600">
-                Dekoruma KW
+                Properly
             </div>
 
             {/* Ikon User/Share (Hiasan doang biar mirip) */}
@@ -49,11 +49,11 @@ export default function Navbar() {
             <nav className="p-4 flex flex-col space-y-2">
             
             <Link href="/" onClick={() => setIsOpen(false)} className="p-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 text-gray-700">
-                🏠 Home / Cari Properti
+                Cari Properti
             </Link>
             
             <Link href="/iklan" onClick={() => setIsOpen(false)} className="p-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 text-gray-700">
-                📢 Iklankan Properti
+                Iklankan Properti
             </Link>
 
             <div className="border-t my-2"></div>
