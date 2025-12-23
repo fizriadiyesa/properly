@@ -1,5 +1,5 @@
 /* 1. Import Font */
-@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;600;700&display=swap');
+@import url('https://use.typekit.net/tei8xbx.css');
 
 /* 2. Import Tailwind v4 */
 @import "tailwindcss";
@@ -13,7 +13,7 @@
   --color-bg-white: #FFFFFF;  /* Putih Bersih (Modern) */
 
   /* Font */
-  --font-serif: "Playfair Display", serif;
+  --font-serif: "sofia-pro", sans-serif;
   --font-sans: "Lato", sans-serif;
 }
 
