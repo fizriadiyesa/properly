@@ -61,9 +61,14 @@ export default function Home() {
       <div className="relative bg-header h-100 md:h-[500px]">
         <div className="absolute inset-0 overflow-hidden">
           <img 
+            src="/images/BannerFinal-mobile.png" 
+            alt="Banner Property" 
+            className="block md:hidden w-full h-full object-cover"
+          />
+          <img 
             src="/images/BannerFinal.png" 
             alt="Banner Property" 
-            className="w-full h-full object-cover"
+            className="hidden md:block w-full h-full object-cover"
           />
         </div>
       </div>
@@ -138,10 +143,15 @@ export default function Home() {
       {/* 1. Background Image Wrapper */}
       {/* Saya ubah inset-1 jadi inset-0 agar gambar full tanpa celah putih di pinggir */}
       <div className="absolute inset-0">
-        <img 
+        <img /*mobile*/
+          src="/images/BannerLower-mobile.png" 
+          alt="Jual Rumah" 
+          className="block md:hidden w-full h-full object-cover object-center"
+        />
+        <img /*desktop*/
           src="/images/BannerLower.png" 
           alt="Jual Rumah" 
-          className="w-full h-full object-cover"
+          className="hidden md:block w-full h-full object-cover object-center"
         />
       </div>
 
