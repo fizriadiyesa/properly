@@ -2,8 +2,8 @@ import "./globals.css";
 import Navbar from "../components/navbar"; // Panggil Navbar yang tadi kita buat
 
 export const metadata = {
-  title: "Aplikasi Properti Gw",
-  description: "Cari rumah murah meriah",
+  title: "Situs Properti Terpercaya",
+  description: "Temukan properti impianmu dengan mudah dan cepat.",
 };
 
 export default function RootLayout({ children }) {
