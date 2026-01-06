@@ -47,7 +47,7 @@ function SearchContent () {
 
         if (filterHarga !== "Semua") {
             const harga = parseInt(item.hargaAngka) || 0;
-            if (filterHarga == "Di Bawhah 1M" && harga >= 1000000000) return false;
+            if (filterHarga == "Di Bawah 1M" && harga >= 1000000000) return false;
             if (filterHarga == "1M-2M" && (harga < 1000000000 || harga > 2000000000)) return false;
             if (filterHarga == "2M-3M" && (harga < 2000000000 || harga > 3000000000)) return false;
             if (filterHarga == "3M-4M" && (harga < 3000000000 || harga > 4000000000)) return false;
@@ -67,8 +67,14 @@ function SearchContent () {
             <option value="Semua">📍 Semua Lokasi</option>
             <option value="Depok">Depok</option>
             <option value="Jakarta Selatan">Jakarta Selatan</option>
+            <option value="Jakarta Timur">Jakarta Timur</option>
+            <option value="Jakarta Utara">Jakarta Utara</option>
+            <option value="Jakarta Barat">Jakarta Barat</option>
+            <option value="Jakarta Pusat">Jakarta Pusat</option>
             <option value="Bekasi">Bekasi</option>
             <option value="Tangerang Selatan">Tangsel</option>
+            <option value="Jawa Tengah">Jawa Tengah</option>
+            <option value="Jawa Timur">Jawa Timur</option>            
           </select>
           <select value={filterTipe} className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterTipe(e.target.value)}>
             <option value="Semua">🏠 Semua Tipe</option>
@@ -79,10 +85,11 @@ function SearchContent () {
           </select>
           <select value={filterHarga} className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterHarga(e.target.value)}>
             <option value="Semua">💰 Range Harga</option>
-            <option value="<1M">Di bawah 1M</option>
+            <option value="Di Bawah 1M">Di Bawah 1M</option>
             <option value="1M-2M">1M - 2M</option>
             <option value="2M-3M">2M - 3M</option>
-            <option value=">4M">Di atas 4M</option>
+            <option value="3M-4M">3M - 4M</option>
+            <option value="Di Atas 4M">Di Atas 4M</option>
           </select>
         </div>
 
