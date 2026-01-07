@@ -27,6 +27,9 @@ export default function Home() {
         
         setAllProperties(data);
 
+        console.log("Data Pertama:", data[0]); 
+        console.log("Link Gambar:", data[0].gambar);
+
         const newCounts = { Rumah: 0, Apartemen: 0, Ruko: 0, Tanah: 0, Kantor: 0 };
         data.forEach(rumah => {
           if (rumah.tipe) {
@@ -105,7 +108,7 @@ export default function Home() {
             <label className="text-xs text-body font-bold uppercase mb-2 tracking-wider">Harga</label>
             <select className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-header font-bold text-header bg-transparent cursor-pointer" onChange={(e) => setHarga(e.target.value)}>
               <option value="Semua">💰 Range Harga</option>
-              <option value="Di Bawah 1M">Di Bawah 1M</option>
+              <option value="Di Bawah   1M">Di Bawah 1M</option>
               <option value="1M-2M">1M - 2M</option>
               <option value="2M-3M">2M - 3M</option>
               <option value="3M-4M">3M - 4M</option>
@@ -181,9 +184,18 @@ export default function Home() {
                 {/* IMAGE */}
                 <div className="relative h-64 overflow-hidden">
                   <img 
-                    src={rumah.gambar || "https://via.placeholder.com/400x300"} 
-                    alt={rumah.nama} 
+                    src={rumah.gambar} 
+                    alt={rumah.nama}
+                    // PENTING: Supaya Google Drive tidak memblokir akses dari website kita
+                    referrerPolicy="no-referrer"
+                    
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    
+                    // Kalau gambar error, ganti ke placeholder yang lebih stabil (placehold.co)
+                    onError={(e) => {
+                      e.target.onerror = null; // Mencegah loop error
+                      e.target.src = "https://placehold.co/600x400?text=Foto+Tidak+Tersedia";
+                    }}
                   />
                   <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-header text-xs px-3 py-1 font-bold uppercase tracking-wider rounded-sm shadow-sm">
                     {rumah.tipe}
