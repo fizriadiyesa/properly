@@ -16,7 +16,7 @@ export default function IklanPage() {
 
       {/* Tombol CTA ke WA Admin */}
       <a 
-        href="https://wa.me/6281234567890?text=Halo%20Admin,%20saya%20mau%20pasang%20iklan%20properti"
+        href="https://wa.me/6285285891018?text=Halo%20Admin,%20saya%20mau%20pasang%20iklan%20properti"
         target="_blank"
         className="bg-teal-600 text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg hover:bg-teal-700 transition-transform hover:scale-105"
       >
