@@ -37,7 +37,7 @@ export default function Navbar() {
           
           {/* Tombol Pasang Iklan */}
           <a 
-            href="https://wa.me/6281234567890?text=Halo%20Admin,%20saya%20mau%20pasang%20iklan"
+            href="https://wa.me/6285285891018?text=Halo%20Admin,%20saya%20mau%20pasang%20iklan"
             target="_blank"
             className="hidden md:flex items-center gap-2 outline-1 outline-sky-900 text-sky-900 px-4 py-2 rounded-lg hover:bg-sky-900 hover:text-white transition-all shadow-sm text-sm font-serif font-medium tracking-wide"
           >
