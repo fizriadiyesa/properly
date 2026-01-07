@@ -2,7 +2,7 @@ import "./globals.css";
 import Navbar from "../components/navbar"; // Panggil Navbar yang tadi kita buat
 
 export const metadata = {
-  title: "Situs Properti Terpercaya",
+  title: "Properly | Situs Properti Terpercaya",
   description: "Temukan properti impianmu dengan mudah dan cepat.",
 };
 
