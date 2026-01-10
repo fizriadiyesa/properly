@@ -80,16 +80,18 @@ export default function Home() {
             <label className="text-xs text-body font-bold uppercase mb-2 tracking-wider">Lokasi</label>
             <select className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-header font-bold text-header bg-transparent cursor-pointer" onChange={(e) => setLokasi(e.target.value)}>
               <option value="Semua">📍 Semua Lokasi</option>
-              <option value="Depok">Depok</option>
               <option value="Jakarta Selatan">Jakarta Selatan</option>
               <option value="Jakarta Timur">Jakarta Timur</option>
               <option value="Jakarta Utara">Jakarta Utara</option>
               <option value="Jakarta Barat">Jakarta Barat</option>
               <option value="Jakarta Pusat">Jakarta Pusat</option>
+              <option value="Depok">Depok</option>
               <option value="Bekasi">Bekasi</option>
-              <option value="Tangerang Selatan">Tangsel</option>
+              <option value="Tangerang">Tangerang</option>
+              <option value="Jawa Barat">Jawa Barat</option>
               <option value="Jawa Tengah">Jawa Tengah</option>
-              <option value="Jawa Timur">Jawa Timur</option>   
+              <option value="Jawa Timur">Jawa Timur</option>  
+              <option value="Bali">Bali</option>   
             </select>
           </div>
 

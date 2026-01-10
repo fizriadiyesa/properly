@@ -35,8 +35,21 @@ function SearchContent () {
     }, []);
 
     const propertiDisaring = dataProperti.filter((item) => {
-        if(!item.nama) return false;
-        if(filterLokasi !== "Semua" && item.kota !== filterLokasi) return false;
+      // 1. Validasi data kosong 
+      if(!item.nama) return false;
+
+      // 2. Filter Lokasi
+      if(filterLokasi !== "Semua"){
+        // Cek Match Kota
+        const isKotaMatch = item.kota === filterLokasi;
+
+        // Cek Match Provinsi (untuk filter Jawa Barat, Jawa Tengah, Jawa Timur)
+        const isProvinsiMatch = item.provinsi && item.provinsi === filterLokasi;
+
+        // Logic Utama:
+        // // Jika tidak match di Kota dan tidak match di Provinsi => RETURN FALSE (Buang)
+        if(!isKotaMatch && !isProvinsiMatch) return false;
+      }
 
         // Logic Includes (Rumah, Ruko)
         if(filterTipe !== "Semua"){
@@ -65,16 +78,18 @@ function SearchContent () {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <select value={filterLokasi} className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterLokasi(e.target.value)}>
             <option value="Semua">📍 Semua Lokasi</option>
-            <option value="Depok">Depok</option>
             <option value="Jakarta Selatan">Jakarta Selatan</option>
             <option value="Jakarta Timur">Jakarta Timur</option>
             <option value="Jakarta Utara">Jakarta Utara</option>
             <option value="Jakarta Barat">Jakarta Barat</option>
             <option value="Jakarta Pusat">Jakarta Pusat</option>
+            <option value="Depok">Depok</option>
             <option value="Bekasi">Bekasi</option>
-            <option value="Tangerang Selatan">Tangsel</option>
+            <option value="Tangerang">Tangerang</option>
+            <option value="Jawa Barat">Jawa Barat</option>
             <option value="Jawa Tengah">Jawa Tengah</option>
-            <option value="Jawa Timur">Jawa Timur</option>            
+            <option value="Jawa Timur">Jawa Timur</option>  
+            <option value="Bali">Bali</option>          
           </select>
           <select value={filterTipe} className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterTipe(e.target.value)}>
             <option value="Semua">🏠 Semua Tipe</option>
