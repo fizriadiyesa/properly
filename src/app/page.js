@@ -1,7 +1,14 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react'; // Tambah useMemo
 import { useRouter } from 'next/navigation';
 import Papa from 'papaparse';
+
+// 1. Fungsi Helper buat bersihin harga (Taruh di luar component)
+const cleanHarga = (hargaString) => {
+  if (!hargaString) return 0;
+  const numbersOnly = hargaString.toString().replace(/[^0-9]/g, ''); 
+  return parseInt(numbersOnly) || 0;
+};
 
 export default function Home() {
   const router = useRouter();
@@ -11,25 +18,21 @@ export default function Home() {
   const [counts, setCounts] = useState({ Rumah: 0, Apartemen: 0, Ruko: 0, Tanah: 0, Kantor: 0 });
   const [loading, setLoading] = useState(true);
 
-  // State Filter Banner
-  const [lokasi, setLokasi] = useState("Semua");
-  const [tipe, setTipe] = useState("Semua");
-  const [harga, setHarga] = useState("Semua");
+  // State Filter
+  const [filterLokasi, setFilterLokasi] = useState("Semua");
+  const [filterTipe, setFilterTipe] = useState("Semua");
+  const [filterHarga, setFilterHarga] = useState("Semua");
 
   useEffect(() => {
-    // ⚠️ UPDATE: Pastikan di Google Sheet ada kolom bernama 'instagramUrl' jika ingin tombol Detail berfungsi
     const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSEaBcNHYoROpb8esZ7V2Efu620J8iDtl-pv9MKNDKNKgVBpXLGFJlRkqcvm7mlFBlCX6Ylh8RFcb7p/pub?gid=0&single=true&output=csv';
 
     Papa.parse(SHEET_URL, {
       download: true, header: true,
       complete: (result) => {
         const data = result.data.filter(item => item.nama);
-        
         setAllProperties(data);
 
-        console.log("Data Pertama:", data[0]); 
-        console.log("Link Gambar:", data[0].gambar);
-
+        // Hitung Kategori
         const newCounts = { Rumah: 0, Apartemen: 0, Ruko: 0, Tanah: 0, Kantor: 0 };
         data.forEach(rumah => {
           if (rumah.tipe) {
@@ -41,7 +44,6 @@ export default function Home() {
              if (t.includes('Kantor')) newCounts.Kantor++;
           }
         });
-
         setCounts(newCounts);
         setLoading(false);
       },
@@ -49,88 +51,134 @@ export default function Home() {
     });
   }, []);
 
+  // 2. PERBAIKAN HANDLE SEARCH (Sesuaikan nama variabel)
   const handleSearch = () => {
-    router.push(`/cari?lokasi=${lokasi}&tipe=${tipe}&harga=${harga}`);
+    // Pakai 'filterLokasi', bukan 'lokasi'
+    router.push(`/cari?lokasi=${filterLokasi}&tipe=${filterTipe}&harga=${filterHarga}`);
   };
+
+  // --- LOGIC: Ambil List Provinsi Unik ---
+  const listProvinsi = useMemo(() => {
+    const rawProvinsi = allProperties.map(item => item.provinsi);
+    const distinctProvinsi = [...new Set(rawProvinsi.filter(p => p && p.trim() !== ""))];
+    return distinctProvinsi.sort();
+  }, [allProperties]);
+
+  // 3. LOGIC FILTER UTAMA (Ini yang tadinya hilang)
+  const filteredProperties = allProperties.filter((rumah) => {
+    // A. Filter Lokasi (Cek Kota ATAU Provinsi)
+    const matchLokasi = filterLokasi === "Semua" || 
+                        rumah.kota === filterLokasi || 
+                        (rumah.provinsi && rumah.provinsi === filterLokasi);
+
+    // B. Filter Tipe
+    const matchTipe = filterTipe === "Semua" || rumah.tipe === filterTipe;
+    
+    // C. Filter Harga
+    let matchHarga = true;
+    const hargaAngka = cleanHarga(rumah.harga);
+    
+    if (filterHarga === "Di Bawah 1M") {
+      matchHarga = hargaAngka < 1000000000;
+    } else if (filterHarga === "1M-2M") {
+      matchHarga = hargaAngka >= 1000000000 && hargaAngka <= 2000000000;
+    } else if (filterHarga === "2M-3M") {
+      matchHarga = hargaAngka > 2000000000 && hargaAngka <= 3000000000;
+    } else if (filterHarga === "3M-4M") {
+      matchHarga = hargaAngka > 3000000000 && hargaAngka <= 4000000000;
+    } else if (filterHarga === "Di Atas 4M") {
+      matchHarga = hargaAngka > 4000000000;
+    }
+
+    return matchLokasi && matchTipe && matchHarga;
+  });
 
   return (
     <div className="min-h-screen bg-white">
       
-      {/* 1. BANNER SECTION */}
+      {/* 1. BANNER */}
       <div className="relative bg-header h-100 md:h-[500px]">
         <div className="absolute inset-0 overflow-hidden">
-          <img 
-            src="/images/BannerFinal-mobile.png" 
-            alt="Banner Property" 
-            className="block md:hidden w-full h-full object-cover"
-          />
-          <img 
-            src="/images/BannerFinal.png" 
-            alt="Banner Property" 
-            className="hidden md:block w-full h-full object-cover"
-          />
+          <img src="/images/BannerFinal-mobile.png" alt="Banner Property" className="block md:hidden w-full h-full object-cover"/>
+          <img src="/images/BannerFinal.png" alt="Banner Property" className="hidden md:block w-full h-full object-cover"/>
         </div>
       </div>
 
-      {/* 2. SEARCH WIDGET CARD */}
+      {/* 2. SEARCH WIDGET */}
       <div className="relative z-20 max-w-4xl mx-auto px-4 -mt-32 md:-mt-40 mb-16">
-        <div className="bg-white p-6 md:p-8 rounded-xl shadow-2xl grid grid-cols-1 md:grid-cols-4 gap-6 items-end text-left border border-gray-100">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-4 gap-6 mb-12 items-end">
           
+          {/* Filter Lokasi */}
           <div className="flex flex-col">
             <label className="text-xs text-body font-bold uppercase mb-2 tracking-wider">Lokasi</label>
-            <select className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-header font-bold text-header bg-transparent cursor-pointer" onChange={(e) => setLokasi(e.target.value)}>
-              <option value="Semua">📍 Semua Lokasi</option>
-              <option value="Jakarta Selatan">Jakarta Selatan</option>
-              <option value="Jakarta Timur">Jakarta Timur</option>
-              <option value="Jakarta Utara">Jakarta Utara</option>
-              <option value="Jakarta Barat">Jakarta Barat</option>
-              <option value="Jakarta Pusat">Jakarta Pusat</option>
-              <option value="Depok">Depok</option>
-              <option value="Bekasi">Bekasi</option>
-              <option value="Tangerang">Tangerang</option>
-              <option value="Jawa Barat">Jawa Barat</option>
-              <option value="Jawa Tengah">Jawa Tengah</option>
-              <option value="Jawa Timur">Jawa Timur</option>  
-              <option value="Bali">Bali</option>   
+            <select 
+                value={filterLokasi} 
+                className="w-full bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" 
+                onChange={(e) => setFilterLokasi(e.target.value)}
+            >
+                <option value="Semua">📍 Semua Lokasi</option>
+                <optgroup label="Kota Populer">
+                <option value="Jakarta Selatan">Jakarta Selatan</option>
+                <option value="Jakarta Timur">Jakarta Timur</option>
+                <option value="Jakarta Utara">Jakarta Utara</option>
+                <option value="Jakarta Barat">Jakarta Barat</option>
+                <option value="Jakarta Pusat">Jakarta Pusat</option>
+                <option value="Depok">Depok</option>
+                <option value="Bekasi">Bekasi</option>
+                <option value="Tangerang">Tangerang</option>
+                <option value="Tangerang Selatan">Tangsel</option>
+                <option value="Bogor">Bogor</option>
+                </optgroup>
+                {listProvinsi.length > 0 && (
+                <optgroup label="Provinsi & Area Lainnya">
+                    {listProvinsi.map((prov, index) => (
+                    <option key={index} value={prov}>{prov}</option>
+                    ))}
+                </optgroup>
+                )}
             </select>
           </div>
 
+          {/* Filter Tipe */}
           <div className="flex flex-col">
             <label className="text-xs text-body font-bold uppercase mb-2 tracking-wider">Tipe</label>
-            <select className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-header font-bold text-header bg-transparent cursor-pointer" onChange={(e) => setTipe(e.target.value)}>
-              <option value="Semua">🏠 Semua Tipe</option>
-              <option value="Rumah">Rumah</option>
-              <option value="Apartemen">Apartemen</option>
-              <option value="Ruko">Ruko</option>
-              <option value="Tanah">Tanah</option>
+            <select value={filterTipe} className="w-full bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterTipe(e.target.value)}>
+                <option value="Semua">🏠 Semua Tipe</option>
+                <option value="Rumah">Rumah</option>
+                <option value="Apartemen">Apartemen</option>
+                <option value="Ruko">Ruko</option>
+                <option value="Tanah">Tanah</option>
+                <option value="Kantor">Kantor</option>
             </select>
           </div>
 
+          {/* Filter Harga */}
           <div className="flex flex-col">
-            <label className="text-xs text-body font-bold uppercase mb-2 tracking-wider">Harga</label>
-            <select className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-header font-bold text-header bg-transparent cursor-pointer" onChange={(e) => setHarga(e.target.value)}>
-              <option value="Semua">💰 Range Harga</option>
-              <option value="Di Bawah   1M">Di Bawah 1M</option>
-              <option value="1M-2M">1M - 2M</option>
-              <option value="2M-3M">2M - 3M</option>
-              <option value="3M-4M">3M - 4M</option>
-              <option value="Di Atas 4M">Di Atas 4M</option>
+             <label className="text-xs text-body font-bold uppercase mb-2 tracking-wider">Harga</label>
+             <select value={filterHarga} className="w-full bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterHarga(e.target.value)}>
+                <option value="Semua">💰 Range Harga</option>
+                <option value="Di Bawah 1M">Di Bawah 1M</option>
+                <option value="1M-2M">1M - 2M</option>
+                <option value="2M-3M">2M - 3M</option>
+                <option value="3M-4M">3M - 4M</option>
+                <option value="Di Atas 4M">Di Atas 4M</option>
             </select>
           </div>
 
-          <button onClick={handleSearch} className="w-full bg-header text-white py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors text-sm shadow-md">
-            Cari
+          {/* Tombol Cari */}
+          <button onClick={handleSearch} className="bg-header text-white py-3 rounded-lg font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors text-xs h-12 shadow-md">
+            Cari Detail
           </button>
+
         </div>
       </div>
 
-      {/* 3. KATEGORI PROPERTI SECTION */}
+      {/* 3. KATEGORI (Icons) */}
       <div className="max-w-6xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
           <h2 className="text-3xl font-serif font-semibold text-header mb-2">Cari Semua Jenis Properti</h2>
           <p className="font-serif font-light">Jelajahi pilihan terbaik kami sesuai kebutuhan Anda</p>
         </div>
-
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <CategoryCard icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />} title="Rumah" count={counts.Rumah} onClick={() => router.push('/cari?tipe=Rumah')} />
           <CategoryCard icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />} title="Apartemen" count={counts.Apartemen} onClick={() => router.push('/cari?tipe=Apartemen')} />
@@ -140,47 +188,32 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 4. SECTION JUAL PROPERTI (CTA) */}
+      {/* 4. CTA IKLAN */}
       <div className="relative h-[400px] md:h-[500px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-            <img 
-            src="/images/BannerLower-mobile.png" 
-            alt="Jual Rumah" 
-            className="block md:hidden w-full h-full object-cover object-center"
-            />
-            <img 
-            src="/images/BannerLower.png" 
-            alt="Jual Rumah" 
-            className="hidden md:block w-full h-full object-cover object-center"
-            />
+            <img src="/images/BannerLower-mobile.png" alt="Jual Rumah" className="block md:hidden w-full h-full object-cover object-center"/>
+            <img src="/images/BannerLower.png" alt="Jual Rumah" className="hidden md:block w-full h-full object-cover object-center"/>
         </div>
-
         <div className="relative z-10 max-w-3xl mx-auto text-center px-6 py-7">
-            <a 
-            href="/iklan" 
-            className="mt-60 inline-block bg-white text-sky-800 px-8 py-3 rounded-lg font-serif font-medium hover:bg-gray-100 transition-transform hover:scale-105 shadow-xl text-nm-lg"
-            >
+            <a href="/iklan" className="mt-60 inline-block bg-white text-sky-800 px-8 py-3 rounded-lg font-serif font-medium hover:bg-gray-100 transition-transform hover:scale-105 shadow-xl text-nm-lg">
             Pasang Iklan Sekarang
             </a>
         </div>
       </div>
 
-      {/* 5. SECTION LISTING ALL PROPERTIES (GRID) */}
+      {/* 5. GRID UTAMA (HASIL FILTER) */}
       <div className="max-w-7xl mx-auto px-4 py-16">
-        
         <div className="text-center mb-12">
           <h2 className="text-3xl font-serif font-semibold text-header mb-2">Rekomendasi Properti</h2>
           <p className="font-serif font-light">Pilihan properti terbaik untuk Anda</p>
         </div>
 
-        {loading && (
-          <div className="text-center py-20 text-body animate-pulse">Menyiapkan etalase properti...</div>
-        )}
+        {loading && <div className="text-center py-20 text-body animate-pulse">Menyiapkan etalase properti...</div>}
 
-        {/* GRID UTAMA */}
+        {/* 4. PENTING: Map ke 'filteredProperties', BUKAN 'allProperties' */}
         {!loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {allProperties.map((rumah, index) => (
+            {filteredProperties.map((rumah, index) => (
               <div key={index} className="group bg-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl shadow-sm border border-gray-50 flex flex-col">
                 
                 {/* IMAGE */}
@@ -188,14 +221,10 @@ export default function Home() {
                   <img 
                     src={rumah.gambar} 
                     alt={rumah.nama}
-                    // PENTING: Supaya Google Drive tidak memblokir akses dari website kita
                     referrerPolicy="no-referrer"
-                    
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    
-                    // Kalau gambar error, ganti ke placeholder yang lebih stabil (placehold.co)
                     onError={(e) => {
-                      e.target.onerror = null; // Mencegah loop error
+                      e.target.onerror = null; 
                       e.target.src = "https://placehold.co/600x400?text=Foto+Tidak+Tersedia";
                     }}
                   />
@@ -217,8 +246,6 @@ export default function Home() {
 
                   {/* ACTION BUTTONS */}
                   <div className="grid grid-cols-2 gap-3 mt-auto">
-                    
-                    {/* 1. Tombol WhatsApp */}
                     <a 
                       href={`https://wa.me/${rumah.wa}?text=Info ${rumah.nama}`} 
                       target="_blank" 
@@ -230,9 +257,6 @@ export default function Home() {
                       </svg>
                       Chat Owner
                     </a>
-
-                    {/* 2. Tombol Lihat Selengkapnya (Instagram) */}
-                    {/* PASTIKAN di CSV ada kolom 'instagramUrl' */}
                     <a 
                       href={rumah.instagramUrl || "#"} 
                       target="_blank" 
@@ -244,7 +268,6 @@ export default function Home() {
                       </svg>
                       Detail
                     </a>
-
                   </div>
                 </div>
               </div>
@@ -252,8 +275,13 @@ export default function Home() {
           </div>
         )}
 
-        {/* TOMBOL LIHAT SEMUA */}
-        {!loading && allProperties.length > 0 && (
+        {!loading && filteredProperties.length === 0 && (
+          <div className="text-center py-20 text-gray-500">
+            Tidak ada properti yang cocok dengan filter Anda.
+          </div>
+        )}
+
+        {!loading && filteredProperties.length > 0 && (
           <div className="mt-12 text-center">
              <button onClick={() => router.push('/cari')} className="inline-block border-b-2 border-header text-header pb-1 font-bold uppercase tracking-widest hover:text-brand hover:border-brand transition-colors text-sm">
                 Lihat Semua Listing &rarr;
@@ -266,7 +294,6 @@ export default function Home() {
   );
 }
 
-// Komponen Card Kategori
 function CategoryCard({ icon, title, count, onClick }) {
   return (
     <div onClick={onClick} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-lg transition-all cursor-pointer group flex flex-col items-center text-center">

@@ -1,21 +1,28 @@
 "use client";
-import React, {useState, useEffect, Suspense} from "react";
+import React, { useState, useEffect, Suspense, useMemo } from "react";
 import Papa from "papaparse";
 import { useSearchParams } from 'next/navigation';
 
-// Komponen utama untuk baca URL parameter
-function SearchContent () {
-    const searchParams = useSearchParams(); // Untuk nangkep filter dari Home
+// 1. Fungsi Helper (Sama seperti Home)
+const cleanHarga = (hargaString) => {
+  if (!hargaString) return 0;
+  const numbersOnly = hargaString.toString().replace(/[^0-9]/g, ''); 
+  return parseInt(numbersOnly) || 0;
+};
+
+// Komponen utama
+function SearchContent() {
+    const searchParams = useSearchParams();
 
     const [dataProperti, setDataProperti] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Set default filter sesuai kiriman dari Home (kalau ada), kalau gak ada default "Semua"
-    const [filterLokasi, setFilterLokasi] = useState(searchParams.get('lokasi')||"Semua");
-    const [filterTipe, setFilterTipe] = useState(searchParams.get('tipe')||"Semua");
-    const [filterHarga, setFilterHarga] = useState(searchParams.get('harga')||"Semua");
+    // Set filter awal dari URL
+    const [filterLokasi, setFilterLokasi] = useState(searchParams.get('lokasi') || "Semua");
+    const [filterTipe, setFilterTipe] = useState(searchParams.get('tipe') || "Semua");
+    const [filterHarga, setFilterHarga] = useState(searchParams.get('harga') || "Semua");
 
-    // Fungsi untuk fetch dan parse CSV
+    // Fetch Data
     useEffect(() => {
         const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSEaBcNHYoROpb8esZ7V2Efu620J8iDtl-pv9MKNDKNKgVBpXLGFJlRkqcvm7mlFBlCX6Ylh8RFcb7p/pub?gid=0&single=true&output=csv";
 
@@ -23,81 +30,102 @@ function SearchContent () {
             download: true,
             header: true,
             complete: (results) => {
-                setDataProperti(results.data);
+                const data = results.data.filter(item => item.nama); // Filter baris kosong
+                setDataProperti(data);
                 setLoading(false);
             },
             error: (error) => {
-                console.error("Error fetching or parsing CSV:", error);
+                console.error("Error fetching CSV:", error);
                 setLoading(false);
             }
         });
-
     }, []);
 
+    // --- LOGIC: Ambil List Provinsi Unik (DIBENERIN: pake dataProperti) ---
+    const listProvinsi = useMemo(() => {
+      const rawProvinsi = dataProperti.map(item => item.provinsi);
+      const distinctProvinsi = [...new Set(rawProvinsi.filter(p => p && p.trim() !== ""))];
+      return distinctProvinsi.sort();
+    }, [dataProperti]); // Dependency ke dataProperti
+
+    // --- LOGIC FILTERING ---
     const propertiDisaring = dataProperti.filter((item) => {
-      // 1. Validasi data kosong 
+      // 1. Validasi
       if(!item.nama) return false;
 
-      // 2. Filter Lokasi
+      // 2. Filter Lokasi (Kota ATAU Provinsi)
       if(filterLokasi !== "Semua"){
-        // Cek Match Kota
         const isKotaMatch = item.kota === filterLokasi;
-
-        // Cek Match Provinsi (untuk filter Jawa Barat, Jawa Tengah, Jawa Timur)
         const isProvinsiMatch = item.provinsi && item.provinsi === filterLokasi;
-
-        // Logic Utama:
-        // // Jika tidak match di Kota dan tidak match di Provinsi => RETURN FALSE (Buang)
         if(!isKotaMatch && !isProvinsiMatch) return false;
       }
 
-        // Logic Includes (Rumah, Ruko)
-        if(filterTipe !== "Semua"){
-            const tipeDiDatabase = item.tipe ? item.tipe.toLowerCase() : "";
-            const tipeDicari = filterTipe.toLowerCase();
-            if(!tipeDiDatabase.includes(tipeDicari)) return false;
-        }
+      // 3. Filter Tipe
+      if(filterTipe !== "Semua"){
+         // Exact match lebih aman daripada includes untuk tipe kpendek
+         if(item.tipe !== filterTipe) return false;
+      }
 
-        if (filterHarga !== "Semua") {
-            const harga = parseInt(item.hargaAngka) || 0;
-            if (filterHarga == "Di Bawah 1M" && harga >= 1000000000) return false;
-            if (filterHarga == "1M-2M" && (harga < 1000000000 || harga > 2000000000)) return false;
-            if (filterHarga == "2M-3M" && (harga < 2000000000 || harga > 3000000000)) return false;
-            if (filterHarga == "3M-4M" && (harga < 3000000000 || harga > 4000000000)) return false;
-            if (filterHarga == "Di Atas 4M" && harga <= 4000000000) return false;
-        }
-        return true;
-    })
+      // 4. Filter Harga (Pake cleanHarga)
+      if (filterHarga !== "Semua") {
+          const harga = cleanHarga(item.harga);
+          
+          if (filterHarga === "Di Bawah 1M" && harga >= 1000000000) return false;
+          if (filterHarga === "1M-2M" && (harga < 1000000000 || harga > 2000000000)) return false;
+          if (filterHarga === "2M-3M" && (harga < 2000000000 || harga > 3000000000)) return false;
+          if (filterHarga === "3M-4M" && (harga < 3000000000 || harga > 4000000000)) return false;
+          if (filterHarga === "Di Atas 4M" && harga <= 4000000000) return false;
+      }
+      return true;
+    });
 
     return (
-    <div className="min-h-screen pt-10 pb-20">
+    <div className="min-h-screen pt-10 pb-20 bg-gray-50">
       <div className="max-w-6xl mx-auto px-4">
-        <h1 className="text-3xl font-serif text-header mb-8">Hasil Pencarian Properti</h1>
+        <h1 className="text-3xl font-serif text-header mb-8 font-bold">Hasil Pencarian Properti</h1>
         
-        {/* FILTER BAR */}
+        {/* FILTER BAR (Updated Style) */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <select value={filterLokasi} className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterLokasi(e.target.value)}>
+          
+          {/* 1. FILTER LOKASI DINAMIS */}
+          <select 
+            value={filterLokasi} 
+            className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" 
+            onChange={(e) => setFilterLokasi(e.target.value)}
+          >
             <option value="Semua">📍 Semua Lokasi</option>
-            <option value="Jakarta Selatan">Jakarta Selatan</option>
-            <option value="Jakarta Timur">Jakarta Timur</option>
-            <option value="Jakarta Utara">Jakarta Utara</option>
-            <option value="Jakarta Barat">Jakarta Barat</option>
-            <option value="Jakarta Pusat">Jakarta Pusat</option>
-            <option value="Depok">Depok</option>
-            <option value="Bekasi">Bekasi</option>
-            <option value="Tangerang">Tangerang</option>
-            <option value="Jawa Barat">Jawa Barat</option>
-            <option value="Jawa Tengah">Jawa Tengah</option>
-            <option value="Jawa Timur">Jawa Timur</option>  
-            <option value="Bali">Bali</option>          
+            <optgroup label="Kota Populer">
+              <option value="Jakarta Selatan">Jakarta Selatan</option>
+              <option value="Jakarta Timur">Jakarta Timur</option>
+              <option value="Jakarta Utara">Jakarta Utara</option>
+              <option value="Jakarta Barat">Jakarta Barat</option>
+              <option value="Jakarta Pusat">Jakarta Pusat</option>
+              <option value="Depok">Depok</option>
+              <option value="Bekasi">Bekasi</option>
+              <option value="Tangerang">Tangerang</option>
+              <option value="Tangerang Selatan">Tangerang Selatan</option>
+              <option value="Bogor">Bogor</option>
+            </optgroup>
+            {listProvinsi.length > 0 && (
+              <optgroup label="Provinsi & Area Lainnya">
+                {listProvinsi.map((prov, index) => (
+                  <option key={index} value={prov}>{prov}</option>
+                ))}
+              </optgroup>
+            )}
           </select>
+
+          {/* 2. FILTER TIPE */}
           <select value={filterTipe} className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterTipe(e.target.value)}>
             <option value="Semua">🏠 Semua Tipe</option>
             <option value="Rumah">Rumah</option>
             <option value="Apartemen">Apartemen</option>
             <option value="Ruko">Ruko</option>
             <option value="Tanah">Tanah</option>
+            <option value="Kantor">Kantor</option>
           </select>
+
+          {/* 3. FILTER HARGA */}
           <select value={filterHarga} className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterHarga(e.target.value)}>
             <option value="Semua">💰 Range Harga</option>
             <option value="Di Bawah 1M">Di Bawah 1M</option>
@@ -108,16 +136,37 @@ function SearchContent () {
           </select>
         </div>
 
-        {loading && <p className="text-center animate-pulse">Sedang mencari...</p>}
+        {/* LOADING STATE */}
+        {loading && (
+             <div className="text-center py-20 text-body animate-pulse">Sedang mencari properti terbaik...</div>
+        )}
 
+        {/* HASIL PENCARIAN */}
         {!loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {propertiDisaring.map((rumah, index) => (
               <div key={index} className="group bg-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl shadow-sm border border-gray-50 flex flex-col">
+                
+                {/* IMAGE SECTION (FIXED) */}
                 <div className="relative h-64 overflow-hidden">
-                  <img src={rumah.gambar || "https://via.placeholder.com/400x300"} alt={rumah.nama} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-header text-xs px-3 py-1 font-bold uppercase tracking-wider rounded-sm shadow-sm">{rumah.tipe}</div>
+                  <img 
+                    src={rumah.gambar} 
+                    alt={rumah.nama}
+                    // PENTING: Anti Block Google Drive
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    // Error Handler
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://placehold.co/600x400?text=Foto+Tidak+Tersedia";
+                    }}
+                  />
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-header text-xs px-3 py-1 font-bold uppercase tracking-wider rounded-sm shadow-sm">
+                    {rumah.tipe}
+                  </div>
                 </div>
+
+                {/* CONTENT */}
                 <div className="p-6 grow flex flex-col justify-between">
                   <div>
                     <h2 className="text-lg text-header mb-1 font-serif leading-tight">{rumah.nama}</h2>
@@ -125,10 +174,9 @@ function SearchContent () {
                     <h1 className="text-header font-serif font-bold text-2xl mb-4">{rumah.hargaDisplay}</h1>
                     <p className="text-body text-sm line-clamp-3 mb-6 leading-relaxed font-light text-gray-500">{rumah.deskripsi}</p>
                   </div>
-                  {/* ACTION BUTTONS */}
+
+                  {/* ACTION BUTTONS (FIXED STYLE) */}
                   <div className="grid grid-cols-2 gap-3 mt-auto">
-                    
-                    {/* 1. Tombol WhatsApp */}
                     <a 
                       href={`https://wa.me/${rumah.wa}?text=Info ${rumah.nama}`} 
                       target="_blank" 
@@ -141,8 +189,6 @@ function SearchContent () {
                       Chat Owner
                     </a>
 
-                    {/* 2. Tombol Lihat Selengkapnya (Instagram) */}
-                    {/* PASTIKAN di CSV ada kolom 'instagramUrl' */}
                     <a 
                       href={rumah.instagramUrl || "#"} 
                       target="_blank" 
@@ -154,12 +200,17 @@ function SearchContent () {
                       </svg>
                       Detail
                     </a>
-
                   </div>
                 </div>
               </div>
             ))}
-            {propertiDisaring.length === 0 && <p className="text-center col-span-full text-gray-400">Properti tidak ditemukan.</p>}
+            
+            {!loading && propertiDisaring.length === 0 && (
+                <div className="col-span-full text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
+                    <p className="text-xl text-header font-serif font-bold mb-2">Tidak Ditemukan</p>
+                    <p className="text-gray-500">Coba ubah filter lokasi atau range harga Anda.</p>
+                </div>
+            )}
           </div>
         )}
       </div>
@@ -167,11 +218,9 @@ function SearchContent () {
   );
 }
 
-
-// Wrapper untuk ubah URL parameter
 export default function CariPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
             <SearchContent />
         </Suspense>
     );
