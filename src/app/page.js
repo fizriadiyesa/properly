@@ -74,24 +74,27 @@ export default function Home() {
     // B. Filter Tipe
     const matchTipe = filterTipe === "Semua" || rumah.tipe === filterTipe;
     
-    // C. Filter Harga
-    let matchHarga = true;
-    const hargaAngka = cleanHarga(rumah.harga);
+    // C. Filter Harga (LOGIC BARU & AMAN)
+    let matchHarga = true; // Default lolos kalau "Semua"
     
-    if (filterHarga === "Di Bawah 1M") {
-      matchHarga = hargaAngka < 1000000000;
-    } else if (filterHarga === "1M-2M") {
-      matchHarga = hargaAngka >= 1000000000 && hargaAngka <= 2000000000;
-    } else if (filterHarga === "2M-3M") {
-      matchHarga = hargaAngka > 2000000000 && hargaAngka <= 3000000000;
-    } else if (filterHarga === "3M-4M") {
-      matchHarga = hargaAngka > 3000000000 && hargaAngka <= 4000000000;
-    } else if (filterHarga === "Di Atas 4M") {
-      matchHarga = hargaAngka > 4000000000;
+    if (filterHarga !== "Semua") {
+      const harga = cleanHarga(rumah.harga); // Pastikan function cleanHarga ada di atas component
+
+      // Kalau data harga error/0, anggap GAK MATCH
+      if (harga === 0) {
+        matchHarga = false;
+      } else {
+        // Cek Range
+        if (filterHarga === "<1M") matchHarga = harga < 1000000000;
+        else if (filterHarga === "1M-2M") matchHarga = harga >= 1000000000 && harga <= 2000000000;
+        else if (filterHarga === "2M-3M") matchHarga = harga > 2000000000 && harga <= 3000000000;
+        else if (filterHarga === "3M-4M") matchHarga = harga > 3000000000 && harga <= 4000000000;
+        else if (filterHarga === ">4M") matchHarga = harga > 4000000000;
+      }
     }
 
     return matchLokasi && matchTipe && matchHarga;
-  });
+    });
 
   return (
     <div className="min-h-screen bg-white">
@@ -157,11 +160,11 @@ export default function Home() {
              <label className="text-xs text-body font-bold uppercase mb-2 tracking-wider">Harga</label>
              <select value={filterHarga} className="w-full bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterHarga(e.target.value)}>
                 <option value="Semua">💰 Range Harga</option>
-                <option value="Di Bawah 1M">Di Bawah 1M</option>
+                <option value="<1M">Di Bawah 1M</option>
                 <option value="1M-2M">1M - 2M</option>
                 <option value="2M-3M">2M - 3M</option>
                 <option value="3M-4M">3M - 4M</option>
-                <option value="Di Atas 4M">Di Atas 4M</option>
+                <option value=">4M">Di Atas 4M</option>
             </select>
           </div>
 

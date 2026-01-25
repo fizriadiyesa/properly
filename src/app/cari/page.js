@@ -3,21 +3,20 @@ import React, { useState, useEffect, Suspense, useMemo } from "react";
 import Papa from "papaparse";
 import { useSearchParams } from 'next/navigation';
 
-// 1. Fungsi Helper (Sama seperti Home)
+// 1. Fungsi Helper: Membersihkan harga jadi angka murni
 const cleanHarga = (hargaString) => {
   if (!hargaString) return 0;
+  // Hapus semua karakter kecuali angka
   const numbersOnly = hargaString.toString().replace(/[^0-9]/g, ''); 
   return parseInt(numbersOnly) || 0;
 };
 
-// Komponen utama
 function SearchContent() {
     const searchParams = useSearchParams();
 
     const [dataProperti, setDataProperti] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Set filter awal dari URL
     const [filterLokasi, setFilterLokasi] = useState(searchParams.get('lokasi') || "Semua");
     const [filterTipe, setFilterTipe] = useState(searchParams.get('tipe') || "Semua");
     const [filterHarga, setFilterHarga] = useState(searchParams.get('harga') || "Semua");
@@ -30,8 +29,16 @@ function SearchContent() {
             download: true,
             header: true,
             complete: (results) => {
-                const data = results.data.filter(item => item.nama); // Filter baris kosong
+                const data = results.data.filter(item => item.nama);
                 setDataProperti(data);
+                
+                // --- DEBUGGING HARGA (Cek Console Browser) ---
+                if (data.length > 0) {
+                    console.log("Cek Kolom Harga:", data[0]); 
+                    console.log("Harga Raw:", data[0].harga); // Pastikan ini tidak undefined
+                    console.log("Harga Clean:", cleanHarga(data[0].harga));
+                }
+                
                 setLoading(false);
             },
             error: (error) => {
@@ -41,19 +48,18 @@ function SearchContent() {
         });
     }, []);
 
-    // --- LOGIC: Ambil List Provinsi Unik (DIBENERIN: pake dataProperti) ---
     const listProvinsi = useMemo(() => {
       const rawProvinsi = dataProperti.map(item => item.provinsi);
       const distinctProvinsi = [...new Set(rawProvinsi.filter(p => p && p.trim() !== ""))];
       return distinctProvinsi.sort();
-    }, [dataProperti]); // Dependency ke dataProperti
+    }, [dataProperti]);
 
-    // --- LOGIC FILTERING ---
+    // --- LOGIC FILTERING (REVISI POSITIVE LOGIC) ---
     const propertiDisaring = dataProperti.filter((item) => {
       // 1. Validasi
       if(!item.nama) return false;
 
-      // 2. Filter Lokasi (Kota ATAU Provinsi)
+      // 2. Filter Lokasi
       if(filterLokasi !== "Semua"){
         const isKotaMatch = item.kota === filterLokasi;
         const isProvinsiMatch = item.provinsi && item.provinsi === filterLokasi;
@@ -62,21 +68,30 @@ function SearchContent() {
 
       // 3. Filter Tipe
       if(filterTipe !== "Semua"){
-         // Exact match lebih aman daripada includes untuk tipe kpendek
          if(item.tipe !== filterTipe) return false;
       }
 
-      // 4. Filter Harga (Pake cleanHarga)
+      // 4. Filter Harga (LOGIC BARU)
       if (filterHarga !== "Semua") {
-          const harga = cleanHarga(item.harga);
+          // PENTING: Pastikan 'item.harga' sesuai dengan nama header di CSV (Case Sensitive!)
+          // Kalau header di CSV 'Harga', ganti jadi item.Harga
+          const harga = cleanHarga(item.harga); 
           
-          if (filterHarga === "Di Bawah 1M" && harga >= 1000000000) return false;
-          if (filterHarga === "1M-2M" && (harga < 1000000000 || harga > 2000000000)) return false;
-          if (filterHarga === "2M-3M" && (harga < 2000000000 || harga > 3000000000)) return false;
-          if (filterHarga === "3M-4M" && (harga < 3000000000 || harga > 4000000000)) return false;
-          if (filterHarga === "Di Atas 4M" && harga <= 4000000000) return false;
+          // Kalau harga 0 atau error, sembunyikan (karena sedang difilter harga)
+          if (harga === 0) return false;
+
+          // Gunakan Positive Logic: "Jika cocok, return true"
+          if (filterHarga === "<1M") return harga < 1000000000;
+          if (filterHarga === "1M-2M") return harga >= 1000000000 && harga <= 2000000000;
+          if (filterHarga === "2M-3M") return harga > 2000000000 && harga <= 3000000000;
+          if (filterHarga === "3M-4M") return harga > 3000000000 && harga <= 4000000000;
+          if (filterHarga === ">4M") return harga > 4000000000;
+          
+          // Kalau tidak ada yang cocok dengan kriteria harga di atas
+          return false;
       }
-      return true;
+
+      return true; // Lolos semua filter
     });
 
     return (
@@ -84,10 +99,8 @@ function SearchContent() {
       <div className="max-w-6xl mx-auto px-4">
         <h1 className="text-3xl font-serif text-header mb-8 font-bold">Hasil Pencarian Properti</h1>
         
-        {/* FILTER BAR (Updated Style) */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           
-          {/* 1. FILTER LOKASI DINAMIS */}
           <select 
             value={filterLokasi} 
             className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" 
@@ -115,7 +128,6 @@ function SearchContent() {
             )}
           </select>
 
-          {/* 2. FILTER TIPE */}
           <select value={filterTipe} className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterTipe(e.target.value)}>
             <option value="Semua">🏠 Semua Tipe</option>
             <option value="Rumah">Rumah</option>
@@ -125,37 +137,31 @@ function SearchContent() {
             <option value="Kantor">Kantor</option>
           </select>
 
-          {/* 3. FILTER HARGA */}
+          {/* FILTER HARGA - SUDAH DIPERBAIKI TYPO NYA */}
           <select value={filterHarga} className="bg-transparent border-b border-gray-200 py-2 focus:outline-none focus:border-header text-header font-sans font-bold cursor-pointer" onChange={(e) => setFilterHarga(e.target.value)}>
             <option value="Semua">💰 Range Harga</option>
-            <option value="Di Bawah 1M">Di Bawah 1M</option>
+            <option value="<1M">Di Bawah 1M</option>
             <option value="1M-2M">1M - 2M</option>
             <option value="2M-3M">2M - 3M</option>
             <option value="3M-4M">3M - 4M</option>
-            <option value="Di Atas 4M">Di Atas 4M</option>
+            <option value="4M">Di Atas 4M</option>
           </select>
         </div>
 
-        {/* LOADING STATE */}
         {loading && (
              <div className="text-center py-20 text-body animate-pulse">Sedang mencari properti terbaik...</div>
         )}
 
-        {/* HASIL PENCARIAN */}
         {!loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {propertiDisaring.map((rumah, index) => (
               <div key={index} className="group bg-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl shadow-sm border border-gray-50 flex flex-col">
-                
-                {/* IMAGE SECTION (FIXED) */}
                 <div className="relative h-64 overflow-hidden">
                   <img 
                     src={rumah.gambar} 
                     alt={rumah.nama}
-                    // PENTING: Anti Block Google Drive
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    // Error Handler
                     onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = "https://placehold.co/600x400?text=Foto+Tidak+Tersedia";
@@ -166,7 +172,6 @@ function SearchContent() {
                   </div>
                 </div>
 
-                {/* CONTENT */}
                 <div className="p-6 grow flex flex-col justify-between">
                   <div>
                     <h2 className="text-lg text-header mb-1 font-serif leading-tight">{rumah.nama}</h2>
@@ -175,7 +180,6 @@ function SearchContent() {
                     <p className="text-body text-sm line-clamp-3 mb-6 leading-relaxed font-light text-gray-500">{rumah.deskripsi}</p>
                   </div>
 
-                  {/* ACTION BUTTONS (FIXED STYLE) */}
                   <div className="grid grid-cols-2 gap-3 mt-auto">
                     <a 
                       href={`https://wa.me/${rumah.wa}?text=Info ${rumah.nama}`} 
